@@ -2,7 +2,7 @@
 
 A little dashboard I built to practice pulling a story out of public health data - life expectancy, health spending, child mortality, and doctor availability across 20 countries, 2000–2022.
 
-**Live dashboard:** 
+**Live dashboard:** https://population-health-atlas.vercel.app/
 
 This started as a learning/visualization project - mainly to practice picking the right chart for a question and actually saying something with the data instead of just plotting it. I later rebuilt the same dataset and story in **Power BI** and **SQL**, to practice the same analysis with a proper BI tool and querying instead of hardcoded JS.
 
