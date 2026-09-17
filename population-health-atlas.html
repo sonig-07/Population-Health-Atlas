@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Population &amp; Health Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #0F2027;
+    --bg-2: #14303A;
+    --surface: #1A3640;
+    --surface-2: #1F3F49;
+    --line: #2E5058;
+    --text: #EFEAE0;
+    --text-dim: #A9C0BE;
+    --text-faint: #7C9A98;
+    --amber: #E3A94B;
+    --teal: #6FB6A8;
+    --rose: #CD7C74;
+    --slate-blue: #7C93C2;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg: #F5F1E6;
+      --bg-2: #EFE9D8;
+      --surface: #FFFFFF;
+      --surface-2: #FBF8EF;
+      --line: #D9D0B8;
+      --text: #1C2B2A;
+      --text-dim: #4B5F5C;
+      --text-faint: #7A8B87;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg: #F5F1E6;
+    --bg-2: #EFE9D8;
+    --surface: #FFFFFF;
+    --surface-2: #FBF8EF;
+    --line: #D9D0B8;
+    --text: #1C2B2A;
+    --text-dim: #4B5F5C;
+    --text-faint: #7A8B87;
+    color-scheme: light;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 40px 28px 90px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 32px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 34px;
+    flex-wrap: wrap;
+  }
+  .brand-mark{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+  }
+  h1{
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(32px, 4.4vw, 52px);
+    line-height: 1.05;
+    margin: 0;
+    max-width: 720px;
+    letter-spacing: -0.01em;
+  }
+  h1 em{
+    font-style: italic;
+    color: var(--teal);
+  }
+  .lede{
+    font-size: 15px;
+    color: var(--text-dim);
+    max-width: 380px;
+    text-align: right;
+    padding-bottom: 4px;
+  }
+
+  /* ---------- KPI strip ---------- */
+  .kpi-row{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 44px;
+  }
+  .kpi{
+    background: var(--bg);
+    padding: 22px 22px 20px;
+  }
+  .kpi .label{
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+  }
+  .kpi .value{
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .kpi .value span{
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .kpi .delta{
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .delta.up{ color: var(--teal); }
+  .delta.down{ color: var(--rose); }
+
+  /* ---------- Layout: sidebar + main ---------- */
+  .layout{
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  aside{
+    position: sticky;
+    top: 24px;
+    border-right: 1px solid var(--line);
+    padding-right: 24px;
+  }
+  aside h3{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 14px;
+    font-weight: 500;
+  }
+  .region-group{ margin-bottom: 26px; }
+  .country-check{
+    display:flex;
+    align-items:center;
+    gap: 9px;
+    padding: 5px 0;
+    font-size: 13.5px;
+    cursor: pointer;
+    color: var(--text-dim);
+  }
+  .country-check input{
+    accent-color: var(--amber);
+    width: 14px; height: 14px;
+    cursor: pointer;
+  }
+  .country-check.active{ color: var(--text); }
+  .swatch{
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .side-note{
+    font-size: 12px;
+    color: var(--text-faint);
+    line-height: 1.6;
+    margin-top: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .theme-toggle{
+    font-family: var(--mono);
+    font-size: 11px;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 6px 10px;
+    cursor: pointer;
+    margin-top: 18px;
+  }
+  .theme-toggle:hover{ border-color: var(--amber); color: var(--text); }
+
+  main{ min-width: 0; }
+
+  section.panel{
+    margin-bottom: 56px;
+  }
+  .panel-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  .panel-head h2{
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .panel-head .num{
+    font-family: var(--mono);
+    color: var(--text-faint);
+    font-size: 12px;
+  }
+  .panel-desc{
+    font-size: 13.5px;
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 6px 0 20px;
+  }
+  .chart-box{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 22px 22px 12px;
+    position: relative;
+  }
+  .chart-box.tall canvas{ max-height: 380px; }
+  .chart-box.med canvas{ max-height: 320px; }
+
+  .legend-row{
+    display:flex; flex-wrap:wrap; gap: 14px 20px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .legend-row .item{ display:flex; align-items:center; gap:6px; }
+
+  .split{
+    display:grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 880px){
+    .split{ grid-template-columns: 1fr; }
+  }
+
+  .snapshot-controls{
+    display:flex; gap: 8px; margin-bottom: 14px;
+  }
+  .year-btn{
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .year-btn.active{
+    border-color: var(--amber);
+    color: var(--text);
+    background: rgba(227,169,75,0.08);
+  }
+
+  table.data-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.data-table th{
+    text-align: left;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--text-faint);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  table.data-table th:hover{ color: var(--text); }
+  table.data-table td{
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-dim);
+  }
+  table.data-table tr:hover td{ color: var(--text); background: var(--surface-2); }
+  table.data-table td.num{ font-family: var(--mono); text-align: right; }
+
+  .finding{
+    background: var(--surface);
+    border-left: 2px solid var(--amber);
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    margin-top: 16px;
+  }
+  .finding strong{ color: var(--text); font-weight: 600; }
+
+  footer{
+    border-top: 1px solid var(--line);
+    margin-top: 20px;
+    padding-top: 20px;
+    font-size: 12px;
+    color: var(--text-faint);
+    display:flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @media (max-width: 720px){
+    .kpi-row{ grid-template-columns: repeat(2,1fr); }
+    .layout{ grid-template-columns: 1fr; }
+    aside{
+      position: static;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding-right: 0;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .lede{ text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand-mark">POPULATION &amp; HEALTH ATLAS · 2000–2022</div>
+      <h1>How <em>population</em> and <em>health outcomes</em><br>move together, country by country.</h1>
+    </div>
+    <p class="lede">A working dashboard for exploring life expectancy, mortality, and health spending across 20 countries. Built as a data-analyst portfolio piece.</p>
+  </header>
+
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="layout">
+    <aside>
+      <h3>Countries shown</h3>
+      <div id="countryList"></div>
+      <div class="side-note">Charts update as you check or uncheck countries. Six are selected by default to keep the lines readable.</div>
+      <button class="theme-toggle" id="themeToggle">Toggle light / dark</button>
+    </aside>
+
+    <main>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Life expectancy, 2000&ndash;2022</h2>
+          <span class="num">FIG. 01</span>
+        </div>
+        <p class="panel-desc">Years of life expectancy at birth. The dip around 2020&ndash;2021 across most countries traces the pandemic's mortality shock &mdash; some recovered by 2022, others hadn't yet.</p>
+        <div class="chart-box tall">
+          <canvas id="lifeExpChart"></canvas>
+        </div>
+        <div class="finding" id="findingLE"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Spending vs. outcome</h2>
+          <span class="num">FIG. 02</span>
+        </div>
+        <p class="panel-desc">Each circle is a country in 2022. Position shows health spending per person against life expectancy; circle size is population. Spending buys the most life expectancy at the low end &mdash; the curve flattens hard past roughly $2,000 per capita.</p>
+        <div class="chart-box tall">
+          <canvas id="bubbleChart"></canvas>
+        </div>
+      </section>
+
+      <div class="split">
+        <section class="panel" style="margin-bottom:0;">
+          <div class="panel-head">
+            <h2>Under-5 mortality</h2>
+            <span class="num">FIG. 03</span>
+          </div>
+          <p class="panel-desc">Deaths per 1,000 live births before age five. Sorted from highest to lowest in the selected year.</p>
+          <div class="snapshot-controls" id="mortYearControls"></div>
+          <div class="chart-box med">
+            <canvas id="mortalityChart"></canvas>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-bottom:0;">
+          <div class="panel-head">
+            <h2>Doctors per 1,000 people</h2>
+            <span class="num">FIG. 04</span>
+          </div>
+          <p class="panel-desc">Physician density, latest available year, for the countries currently selected.</p>
+          <div class="chart-box med">
+            <canvas id="physicianChart"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Full country table</h2>
+          <span class="num">FIG. 05</span>
+        </div>
+        <p class="panel-desc">All 20 countries, unfiltered. Click a column header to sort.</p>
+        <div class="chart-box" style="overflow-x:auto;">
+          <table class="data-table" id="dataTable"></table>
+        </div>
+      </section>
+
+      <footer>
+        <span>Figures are approximate, compiled from publicly reported World Bank / WHO / UN population &amp; health indicators &mdash; treat as illustrative. Before submitting this as coursework, refresh the numbers from the live World Bank API (api.worldbank.org) or an Our World in Data CSV export.</span>
+        <span>Dashboard built with Chart.js</span>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+/* ============ DATA ============
+   Approximate public-data figures (World Bank / WHO / UN style indicators).
+   life_expectancy: {2000,2010,2020,2022}
+   health_exp_pc: USD per capita, ~2022
+   u5_mortality: {2000,2010,2022} per 1000 live births
+   physicians: per 1000 people, latest available
+   population: millions, 2022
+*/
+const COUNTRIES = [
+  {name:"United States", iso:"USA", region:"Americas", population:333.3, color:"#E3A94B",
+   life_expectancy:{2000:76.6,2010:78.5,2020:77.0,2022:77.5},
+   health_exp_pc:12900, u5_mortality:{2000:8.5,2010:7.8,2022:6.0}, physicians:2.6},
+  {name:"United Kingdom", iso:"GBR", region:"Europe", population:67.5, color:"#7C93C2",
+   life_expectancy:{2000:77.9,2010:80.5,2020:80.9,2022:80.7},
+   health_exp_pc:5400, u5_mortality:{2000:6.4,2010:5.0,2022:3.9}, physicians:3.2},
+  {name:"India", iso:"IND", region:"Asia", population:1417, color:"#6FB6A8",
+   life_expectancy:{2000:62.6,2010:66.9,2020:67.2,2022:67.7},
+   health_exp_pc:73, u5_mortality:{2000:91.2,2010:59.2,2022:29.6}, physicians:0.7},
+  {name:"China", iso:"CHN", region:"Asia", population:1412, color:"#CD7C74",
+   life_expectancy:{2000:71.4,2010:75.0,2020:77.9,2022:78.2},
+   health_exp_pc:730, u5_mortality:{2000:36.9,2010:16.4,2022:6.9}, physicians:2.4},
+  {name:"Brazil", iso:"BRA", region:"Americas", population:215.3, color:"#9E7CC2",
+   life_expectancy:{2000:70.1,2010:73.2,2020:72.8,2022:72.8},
+   health_exp_pc:800, u5_mortality:{2000:31.2,2010:17.4,2022:13.4}, physicians:2.3},
+  {name:"Nigeria", iso:"NGA", region:"Africa", population:218.5, color:"#D98E63",
+   life_expectancy:{2000:46.0,2010:50.6,2020:53.0,2022:53.9},
+   health_exp_pc:80, u5_mortality:{2000:183.0,2010:133.4,2022:110.8}, physicians:0.4},
+  {name:"South Africa", iso:"ZAF", region:"Africa", population:60.4, color:"#5FA3A0",
+   life_expectancy:{2000:55.0,2010:57.1,2020:61.5,2022:62.3},
+   health_exp_pc:550, u5_mortality:{2000:56.6,2010:44.4,2022:32.7}, physicians:0.9},
+  {name:"Japan", iso:"JPN", region:"Asia", population:124.6, color:"#B25A6E",
+   life_expectancy:{2000:81.2,2010:82.9,2020:84.6,2022:84.1},
+   health_exp_pc:4300, u5_mortality:{2000:5.2,2010:3.3,2022:2.0}, physicians:2.6},
+  {name:"Germany", iso:"DEU", region:"Europe", population:83.8, color:"#8AA6C2",
+   life_expectancy:{2000:78.2,2010:80.2,2020:81.1,2022:80.9},
+   health_exp_pc:7400, u5_mortality:{2000:5.1,2010:4.1,2022:3.6}, physicians:4.5},
+  {name:"Russia", iso:"RUS", region:"Europe", population:144.7, color:"#A6A6A6",
+   life_expectancy:{2000:65.5,2010:68.9,2020:71.3,2022:72.6},
+   health_exp_pc:900, u5_mortality:{2000:20.3,2010:10.1,2022:4.8}, physicians:3.7},
+  {name:"Mexico", iso:"MEX", region:"Americas", population:127.5, color:"#C2A15F",
+   life_expectancy:{2000:74.2,2010:75.1,2020:70.5,2022:70.2},
+   health_exp_pc:620, u5_mortality:{2000:26.6,2010:16.9,2022:12.7}, physicians:2.4},
+  {name:"Egypt", iso:"EGY", region:"Africa", population:110.9, color:"#C29B6F",
+   life_expectancy:{2000:68.8,2010:70.5,2020:70.0,2022:70.2},
+   health_exp_pc:180, u5_mortality:{2000:44.7,2010:23.4,2022:18.9}, physicians:0.8},
+  {name:"Pakistan", iso:"PAK", region:"Asia", population:235.8, color:"#7CA67C",
+   life_expectancy:{2000:62.9,2010:65.0,2020:65.7,2022:66.1},
+   health_exp_pc:40, u5_mortality:{2000:100.4,2010:81.5,2022:60.3}, physicians:1.1},
+  {name:"Bangladesh", iso:"BGD", region:"Asia", population:171.2, color:"#6E9E8F",
+   life_expectancy:{2000:65.8,2010:70.0,2020:72.0,2022:72.4},
+   health_exp_pc:50, u5_mortality:{2000:87.7,2010:44.2,2022:26.7}, physicians:0.6},
+  {name:"Kenya", iso:"KEN", region:"Africa", population:54.0, color:"#B58A5A",
+   life_expectancy:{2000:51.3,2010:60.8,2020:63.2,2022:63.9},
+   health_exp_pc:90, u5_mortality:{2000:97.0,2010:52.4,2022:41.0}, physicians:0.2},
+  {name:"Indonesia", iso:"IDN", region:"Asia", population:275.5, color:"#8FA85F",
+   life_expectancy:{2000:66.2,2010:68.6,2020:67.6,2022:68.3},
+   health_exp_pc:130, u5_mortality:{2000:52.3,2010:32.6,2022:21.4}, physicians:0.7},
+  {name:"Ethiopia", iso:"ETH", region:"Africa", population:123.4, color:"#B27C4E",
+   life_expectancy:{2000:51.8,2010:62.0,2020:65.0,2022:65.7},
+   health_exp_pc:30, u5_mortality:{2000:146.4,2010:87.5,2022:46.4}, physicians:0.1},
+  {name:"Vietnam", iso:"VNM", region:"Asia", population:98.2, color:"#5C9E8C",
+   life_expectancy:{2000:73.4,2010:75.2,2020:73.7,2022:73.6},
+   health_exp_pc:180, u5_mortality:{2000:29.4,2010:23.0,2022:19.4}, physicians:0.8},
+  {name:"France", iso:"FRA", region:"Europe", population:64.6, color:"#7A8FB5",
+   life_expectancy:{2000:79.2,2010:81.7,2020:82.3,2022:82.3},
+   health_exp_pc:5700, u5_mortality:{2000:5.0,2010:4.0,2022:3.9}, physicians:3.4},
+  {name:"Australia", iso:"AUS", region:"Oceania", population:26.0, color:"#4FA3D1",
+   life_expectancy:{2000:79.3,2010:81.7,2020:83.2,2022:83.3},
+   health_exp_pc:5900, u5_mortality:{2000:6.0,2010:4.7,2022:3.5}, physicians:3.8},
+];
+
+const DEFAULT_SELECTED = ["USA","IND","CHN","NGA","JPN","DEU"];
+let selected = new Set(DEFAULT_SELECTED);
+let mortYear = 2022;
+
+function byIso(iso){ return COUNTRIES.find(c=>c.iso===iso); }
+function fmtNum(n, d=1){ return Number(n).toLocaleString(undefined,{maximumFractionDigits:d, minimumFractionDigits:0}); }
+
+/* ---------- Chart.js theme helpers ---------- */
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function chartDefaults(){
+  Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+  Chart.defaults.color = cssVar('--text-dim');
+  Chart.defaults.borderColor = cssVar('--line');
+}
+
+let charts = {};
+
+/* ---------- KPI strip ---------- */
+function renderKPIs(){
+  const world2022 = COUNTRIES.reduce((s,c)=>s+c.life_expectancy[2022],0)/COUNTRIES.length;
+  const world2000 = COUNTRIES.reduce((s,c)=>s+c.life_expectancy[2000],0)/COUNTRIES.length;
+  const totalPop = COUNTRIES.reduce((s,c)=>s+c.population,0);
+  const highestLE = COUNTRIES.reduce((a,b)=> a.life_expectancy[2022]>b.life_expectancy[2022]?a:b);
+  const lowestLE = COUNTRIES.reduce((a,b)=> a.life_expectancy[2022]<b.life_expectancy[2022]?a:b);
+  const gap = highestLE.life_expectancy[2022]-lowestLE.life_expectancy[2022];
+
+  const kpis = [
+    {label:"Avg. life expectancy (2022), 20 countries", value:fmtNum(world2022), unit:"yrs",
+     delta:`+${fmtNum(world2022-world2000)} yrs since 2000`, dir:"up"},
+    {label:"Combined population shown", value:fmtNum(totalPop,0), unit:"million",
+     delta:"across 20 countries", dir:"flat"},
+    {label:"Widest life-expectancy gap", value:fmtNum(gap), unit:"yrs",
+     delta:`${highestLE.name} vs. ${lowestLE.name}`, dir:"down"},
+    {label:"Highest under-5 mortality (2022)", value:fmtNum(Math.max(...COUNTRIES.map(c=>c.u5_mortality[2022]))), unit:"/1,000",
+     delta:COUNTRIES.reduce((a,b)=>a.u5_mortality[2022]>b.u5_mortality[2022]?a:b).name, dir:"down"},
+  ];
+
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="kpi">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}<span>${k.unit}</span></div>
+      <div class="delta ${k.dir}">${k.delta}</div>
+    </div>
+  `).join('');
+}
+
+/* ---------- Sidebar country list ---------- */
+function renderCountryList(){
+  const regions = [...new Set(COUNTRIES.map(c=>c.region))];
+  const el = document.getElementById('countryList');
+  el.innerHTML = regions.map(region=>{
+    const items = COUNTRIES.filter(c=>c.region===region).map(c=>`
+      <label class="country-check ${selected.has(c.iso)?'active':''}" data-iso="${c.iso}">
+        <input type="checkbox" ${selected.has(c.iso)?'checked':''} data-iso="${c.iso}">
+        <span class="swatch" style="background:${c.color}"></span>
+        ${c.name}
+      </label>
+    `).join('');
+    return `<div class="region-group"><h3>${region}</h3>${items}</div>`;
+  }).join('');
+
+  el.querySelectorAll('input[type=checkbox]').forEach(input=>{
+    input.addEventListener('change', (e)=>{
+      const iso = e.target.dataset.iso;
+      if(e.target.checked){ selected.add(iso); } else { selected.delete(iso); }
+      e.target.closest('.country-check').classList.toggle('active', e.target.checked);
+      updateAll();
+    });
+  });
+}
+
+/* ---------- FIG 01: life expectancy lines ---------- */
+function renderLifeExpChart(){
+  const years = [2000,2010,2020,2022];
+  const list = COUNTRIES.filter(c=>selected.has(c.iso));
+  const datasets = list.map(c=>({
+    label: c.name,
+    data: years.map(y=>c.life_expectancy[y]),
+    borderColor: c.color,
+    backgroundColor: c.color,
+    tension: 0.3,
+    pointRadius: 3,
+    borderWidth: 2,
+  }));
+  const ctx = document.getElementById('lifeExpChart');
+  if(charts.le) charts.le.destroy();
+  charts.le = new Chart(ctx, {
+    type:'line',
+    data:{ labels: years, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:8, boxHeight:8, usePointStyle:true, padding:16 } },
+                tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.dataset.label}: ${ctx.parsed.y} yrs` } } },
+      scales:{
+        y:{ title:{display:true,text:'Life expectancy (years)'}, grid:{color: cssVar('--line')} },
+        x:{ grid:{display:false} }
+      }
+    }
+  });
+
+  // finding text
+  if(list.length){
+    const biggestGain = list.reduce((a,b)=> (b.life_expectancy[2022]-b.life_expectancy[2000]) > (a.life_expectancy[2022]-a.life_expectancy[2000]) ? b : a);
+    const gain = (biggestGain.life_expectancy[2022]-biggestGain.life_expectancy[2000]).toFixed(1);
+    document.getElementById('findingLE').innerHTML =
+      `<strong>${biggestGain.name}</strong> gained the most among the countries selected: +${gain} years of life expectancy between 2000 and 2022.`;
+  }
+}
+
+/* ---------- FIG 02: bubble chart spend vs outcome ---------- */
+function renderBubbleChart(){
+  const list = COUNTRIES.filter(c=>selected.has(c.iso));
+  const data = list.map(c=>({ x:c.health_exp_pc, y:c.life_expectancy[2022], r: Math.sqrt(c.population)*2.6, label:c.name }));
+  const ctx = document.getElementById('bubbleChart');
+  if(charts.bubble) charts.bubble.destroy();
+  charts.bubble = new Chart(ctx, {
+    type:'bubble',
+    data:{ datasets: list.map((c,i)=>({
+      label: c.name,
+      data:[data[i]],
+      backgroundColor: c.color+'B0',
+      borderColor: c.color,
+      borderWidth:1,
+    })) },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ boxWidth:8, boxHeight:8, usePointStyle:true, padding:16 } },
+        tooltip:{ callbacks:{ label:(ctx)=> ` ${ctx.dataset.label}: $${fmtNum(ctx.raw.x,0)}/capita · ${ctx.raw.y} yrs` } }
+      },
+      scales:{
+        x:{ type:'logarithmic', title:{display:true,text:'Health spending per capita (USD, log scale)'}, grid:{color: cssVar('--line')} },
+        y:{ title:{display:true,text:'Life expectancy (years)'}, grid:{color: cssVar('--line')} }
+      }
+    }
+  });
+}
+
+/* ---------- FIG 03: mortality bar (sortable by year) ---------- */
+function renderMortYearControls(){
+  const years = [2000,2010,2022];
+  document.getElementById('mortYearControls').innerHTML = years.map(y=>
+    `<button class="year-btn ${y===mortYear?'active':''}" data-year="${y}">${y}</button>`
+  ).join('');
+  document.querySelectorAll('.year-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      mortYear = Number(btn.dataset.year);
+      renderMortYearControls();
+      renderMortalityChart();
+    });
+  });
+}
+
+function renderMortalityChart(){
+  const list = COUNTRIES.filter(c=>selected.has(c.iso))
+    .slice().sort((a,b)=> b.u5_mortality[mortYear]-a.u5_mortality[mortYear]);
+  const ctx = document.getElementById('mortalityChart');
+  if(charts.mort) charts.mort.destroy();
+  charts.mort = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: list.map(c=>c.name),
+      datasets:[{
+        label:`Under-5 mortality, ${mortYear}`,
+        data: list.map(c=>c.u5_mortality[mortYear]),
+        backgroundColor: list.map(c=>c.color),
+        borderRadius: 2,
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:(ctx)=> ` ${ctx.raw} deaths per 1,000 live births` } } },
+      scales:{
+        x:{ title:{display:true, text:'Deaths per 1,000 live births'}, grid:{color: cssVar('--line')} },
+        y:{ grid:{display:false} }
+      }
+    }
+  });
+}
+
+/* ---------- FIG 04: physicians bar ---------- */
+function renderPhysicianChart(){
+  const list = COUNTRIES.filter(c=>selected.has(c.iso)).slice().sort((a,b)=>b.physicians-a.physicians);
+  const ctx = document.getElementById('physicianChart');
+  if(charts.phys) charts.phys.destroy();
+  charts.phys = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: list.map(c=>c.name),
+      datasets:[{
+        label:'Physicians per 1,000',
+        data: list.map(c=>c.physicians),
+        backgroundColor: list.map(c=>c.color),
+        borderRadius: 2,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:(ctx)=> ` ${ctx.raw} per 1,000 people` } } },
+      scales:{
+        y:{ title:{display:true, text:'Per 1,000 people'}, grid:{color: cssVar('--line')} },
+        x:{ grid:{display:false}, ticks:{ maxRotation:40, minRotation:40 } }
+      }
+    }
+  });
+}
+
+/* ---------- FIG 05: full table ---------- */
+let sortState = { col: 'name', dir: 1 };
+function renderTable(){
+  const cols = [
+    {key:'name', label:'Country'},
+    {key:'region', label:'Region'},
+    {key:'population', label:'Pop. (M)'},
+    {key:'le2022', label:'Life exp. 2022'},
+    {key:'le_change', label:'Δ since 2000'},
+    {key:'health_exp_pc', label:'Health $/capita'},
+    {key:'u5_2022', label:'U5 mortality 2022'},
+    {key:'physicians', label:'Physicians/1,000'},
+  ];
+  const rows = COUNTRIES.map(c=>({
+    name:c.name, region:c.region, population:c.population,
+    le2022:c.life_expectancy[2022], le_change: +(c.life_expectancy[2022]-c.life_expectancy[2000]).toFixed(1),
+    health_exp_pc:c.health_exp_pc, u5_2022:c.u5_mortality[2022], physicians:c.physicians
+  }));
+  rows.sort((a,b)=>{
+    const v = a[sortState.col], w = b[sortState.col];
+    if(typeof v === 'string') return v.localeCompare(w)*sortState.dir;
+    return (v-w)*sortState.dir;
+  });
+  const thead = `<thead><tr>${cols.map(c=>`<th data-col="${c.key}">${c.label}${sortState.col===c.key?(sortState.dir===1?' ↑':' ↓'):''}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${rows.map(r=>`
+    <tr>
+      <td>${r.name}</td>
+      <td>${r.region}</td>
+      <td class="num">${fmtNum(r.population,0)}</td>
+      <td class="num">${r.le2022}</td>
+      <td class="num">${r.le_change>0?'+':''}${r.le_change}</td>
+      <td class="num">$${fmtNum(r.health_exp_pc,0)}</td>
+      <td class="num">${r.u5_2022}</td>
+      <td class="num">${r.physicians}</td>
+    </tr>`).join('')}</tbody>`;
+  const table = document.getElementById('dataTable');
+  table.innerHTML = thead+tbody;
+  table.querySelectorAll('th').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const col = th.dataset.col;
+      sortState.dir = (sortState.col===col) ? sortState.dir*-1 : 1;
+      sortState.col = col;
+      renderTable();
+    });
+  });
+}
+
+function safe(fn, label){
+  try { fn(); } catch(e){ console.error('Dashboard error in '+label+':', e); }
+}
+
+function updateAll(){
+  safe(renderKPIs, 'renderKPIs');
+  safe(renderLifeExpChart, 'renderLifeExpChart');
+  safe(renderBubbleChart, 'renderBubbleChart');
+  safe(renderMortalityChart, 'renderMortalityChart');
+  safe(renderPhysicianChart, 'renderPhysicianChart');
+}
+
+/* ---------- Theme toggle ---------- */
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const root = document.documentElement;
+  const current = root.getAttribute('data-theme');
+  let next;
+  if(!current){
+    next = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
+  } else {
+    next = current === 'dark' ? 'light' : 'dark';
+  }
+  root.setAttribute('data-theme', next);
+  safe(chartDefaults, 'chartDefaults');
+  updateAll();
+});
+
+/* ---------- Init ----------
+   Non-chart content renders first and independently, so a Chart.js
+   load failure (network hiccup, blocked CDN, etc.) never blanks the
+   whole page — only the charts that depend on it. */
+safe(renderKPIs, 'renderKPIs');
+safe(renderCountryList, 'renderCountryList');
+safe(renderMortYearControls, 'renderMortYearControls');
+safe(renderTable, 'renderTable');
+
+if (typeof Chart === 'undefined') {
+  console.error('Chart.js failed to load — charts will not render, but KPIs, filters, and the table above still work.');
+  document.querySelectorAll('.chart-box canvas').forEach(c=>{
+    const msg = document.createElement('div');
+    msg.style.cssText = 'padding:30px;text-align:center;color:var(--text-faint);font-family:var(--mono);font-size:12px;';
+    msg.textContent = 'Chart library failed to load — try refreshing the page.';
+    c.replaceWith(msg);
+  });
+} else {
+  safe(chartDefaults, 'chartDefaults');
+  safe(renderLifeExpChart, 'renderLifeExpChart');
+  safe(renderBubbleChart, 'renderBubbleChart');
+  safe(renderMortalityChart, 'renderMortalityChart');
+  safe(renderPhysicianChart, 'renderPhysicianChart');
+}
+</script>
+</body>
+</html>
