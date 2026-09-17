@@ -1,10 +1,10 @@
 # Population & Health Atlas
 
-A little dashboard I built to practice pulling a story out of public health data — life expectancy, health spending, child mortality, and doctor availability across 20 countries, 2000–2022.
+A little dashboard I built to practice pulling a story out of public health data - life expectancy, health spending, child mortality, and doctor availability across 20 countries, 2000–2022.
 
 **Live dashboard:** 
 
-This started as a learning/visualization project — mainly to practice picking the right chart for a question and actually saying something with the data instead of just plotting it. I later rebuilt the same dataset and story in **Power BI** and **SQL**, to practice the same analysis with a proper BI tool and querying instead of hardcoded JS.
+This started as a learning/visualization project - mainly to practice picking the right chart for a question and actually saying something with the data instead of just plotting it. I later rebuilt the same dataset and story in **Power BI** and **SQL**, to practice the same analysis with a proper BI tool and querying instead of hardcoded JS.
 
 ## What it's trying to answer
 
@@ -39,4 +39,4 @@ The numbers are realistic but **approximate** — compiled from general knowledg
 - **Power BI:** same CSV, rebuilt with a Power Query unpivot step for the trend chart, slicers instead of checkboxes for filtering
 - **SQL:** same dataset queried directly for the same questions (trend over time, spend-vs-outcome, mortality ranking)
 
-Doing the same analysis three ways (code, BI tool, SQL) was the actual point of the exercise — same questions, same data, different tools.
+Doing the same analysis three ways (code, BI tool, SQL) was the actual point of the exercise - same questions, same data, different tools.
